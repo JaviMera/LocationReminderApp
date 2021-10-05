@@ -25,16 +25,44 @@ class AuthenticationActivity : AppCompatActivity() {
             AuthUI.IdpConfig.GoogleBuilder().build(), AuthUI.IdpConfig.EmailBuilder().build()
         )
 
-//        startActivityForResult(
-//            AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(
-//                providers
-//            ).build(),
-//            1001
-//        )
+        if(FirebaseAuth.getInstance().currentUser != null){
+            val intent = Intent(this, RemindersActivity::class.java)
+            startActivity(intent)
+        }else{
+            startActivityForResult(
+                AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(
+                    providers
+                ).build(),
+                1001
+            )
+        }
+
 //          TODO: If the user was authenticated, send him to RemindersActivity
 
 //          TODO: a bonus is to customize the sign in flow to look nice using :
         //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if(FirebaseAuth.getInstance().currentUser == null){
+            val providers = arrayListOf(
+                AuthUI.IdpConfig.GoogleBuilder().build(), AuthUI.IdpConfig.EmailBuilder().build()
+            )
+
+            if(FirebaseAuth.getInstance().currentUser != null){
+                val intent = Intent(this, RemindersActivity::class.java)
+                startActivity(intent)
+            }else{
+                startActivityForResult(
+                    AuthUI.getInstance().createSignInIntentBuilder().setAvailableProviders(
+                        providers
+                    ).build(),
+                    1001
+                )
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
