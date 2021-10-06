@@ -8,15 +8,21 @@ import android.view.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.*
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
@@ -24,6 +30,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
+    private val _locationClient: FusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(requireContext()) }
+    private lateinit var _marker: MarkerOptions
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -64,6 +72,22 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             )
         }else{
             map.isMyLocationEnabled = true
+
+            _locationClient.lastLocation.addOnCompleteListener{
+                if(it.isSuccessful && it.result != null){
+                    val position = LatLng(it.result.latitude, it.result.longitude)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        position,
+                        ZOOM_LEVEL
+                    ))
+
+                    _marker = MarkerOptions()
+                        .position(position)
+                        .title("Current Location")
+
+                    map.addMarker(_marker)
+                }
+            }
         }
     }
 
@@ -122,5 +146,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     companion object {
         private const val REQUEST_PERMISSION_CODE = 1002
+        private const val ZOOM_LEVEL = 15.0f
     }
 }
