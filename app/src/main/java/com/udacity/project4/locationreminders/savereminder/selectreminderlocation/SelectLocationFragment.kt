@@ -15,6 +15,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -31,7 +32,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     private val _locationClient: FusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(requireContext()) }
-    private lateinit var _marker: MarkerOptions
+    private lateinit var _marker: Marker
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -81,11 +82,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         ZOOM_LEVEL
                     ))
 
-                    _marker = MarkerOptions()
+                    _marker = map.addMarker(MarkerOptions()
                         .position(position)
-                        .title("Current Location")
-
-                    map.addMarker(_marker)
+                        .title("Current Location"))
                 }
             }
         }
@@ -140,6 +139,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         googleMap?.let {
             map = it
+
+            map.setOnMapLongClickListener { clickPosition ->
+                _marker.remove()
+                _marker = map.addMarker(MarkerOptions()
+                    .position(clickPosition)
+                    .title("Current Location"))
+            }
             enableMyLocation()
         }
     }
