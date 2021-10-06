@@ -29,7 +29,7 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
-class SelectLocationFragment : BaseFragment() {
+class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
@@ -43,9 +43,11 @@ class SelectLocationFragment : BaseFragment() {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
-
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
+
 
 //        TODO: add the map setup implementation
 //        TODO: zoom to the user location after taking his permission
@@ -85,6 +87,10 @@ class SelectLocationFragment : BaseFragment() {
             true
         }
         else -> super.onOptionsItemSelected(item)
+    }
+
+    override fun onMapReady(map: GoogleMap?) {
+
     }
 
 
