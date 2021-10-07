@@ -3,10 +3,10 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Bundle
 import android.view.*
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
@@ -47,14 +48,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
 
-//        TODO: add the map setup implementation
-//        TODO: zoom to the user location after taking his permission
-//        TODO: add style to the map
-//        TODO: put a marker to location that the user selected
+        binding.saveReminderActivityButtonSave.setOnClickListener {
 
-
-//        TODO: call this function after the user confirms on the selected location
-        onLocationSelected()
+            onLocationSelected()
+        }
         return binding.root
     }
 
@@ -76,15 +73,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
             _locationClient.lastLocation.addOnCompleteListener{
                 if(it.isSuccessful && it.result != null){
-                    val position = LatLng(it.result.latitude, it.result.longitude)
+                    val currentPosition = LatLng(it.result.latitude, it.result.longitude)
                     map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                        position,
+                        currentPosition,
                         ZOOM_LEVEL
                     ))
 
-                    _marker = map.addMarker(MarkerOptions()
-                        .position(position)
-                        .title("Current Location"))
+                    _marker = map.addMarker(
+                        MarkerOptions()
+                            .position(currentPosition)
+                            .title(getLocationName(currentPosition)))
                 }
             }
         }
@@ -105,18 +103,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        //        TODO: When the user confirms on the selected location,
-        //         send back the selected location details to the view model
-        //         and navigate back to the previous fragment to save the reminder and add the geofence
+        _viewModel.reminderSelectedLocationStr.value = _marker.title
+        _viewModel.navigationCommand.value =
+            NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
     }
-
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.map_options, menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
         R.id.normal_map -> {
             map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
@@ -144,10 +140,23 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 _marker.remove()
                 _marker = map.addMarker(MarkerOptions()
                     .position(clickPosition)
-                    .title("Current Location"))
+                    .title(getLocationName(clickPosition)))
             }
             enableMyLocation()
         }
+    }
+
+    private fun getLocationName(position: LatLng) : String {
+        val geocoder = Geocoder(requireContext(), Locale.getDefault())
+        val addresses = geocoder.getFromLocation(position.latitude, position.longitude, 1)
+
+        if(addresses.isNotEmpty()){
+            addresses[0]?.let {
+                return it.featureName + " " + it.thoroughfare
+            }
+        }
+
+        return "Location"
     }
 
     companion object {
