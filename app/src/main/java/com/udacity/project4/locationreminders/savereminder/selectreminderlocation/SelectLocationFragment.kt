@@ -104,6 +104,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun onLocationSelected() {
         _viewModel.reminderSelectedLocationStr.value = _marker.title
+        _viewModel.longitude.value = _marker.position.longitude
+        _viewModel.latitude.value = _marker.position.latitude
         _viewModel.navigationCommand.value =
             NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
     }

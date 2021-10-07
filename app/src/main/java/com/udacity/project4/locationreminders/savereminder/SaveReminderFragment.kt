@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.udacity.project4.R
@@ -45,8 +46,9 @@ class SaveReminderFragment : BaseFragment() {
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription
             val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude
+            val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
+
 
 //            TODO: use the user entered reminder details to:
 //             1) add a geofencing request
@@ -54,7 +56,12 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         _viewModel.reminderSelectedLocationStr.observe(viewLifecycleOwner, Observer {
-            binding.selectedLocation.text = it!!
+            if(it != null){
+                binding.selectedLocation.text = it
+            }else{
+                Toast.makeText(requireContext(), "Unable to save selected location.", Toast.LENGTH_SHORT)
+                    .show()
+            }
         })
     }
 
