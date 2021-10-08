@@ -5,7 +5,9 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
+import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -79,10 +81,17 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         ZOOM_LEVEL
                     ))
 
-                    _marker = map.addMarker(
-                        MarkerOptions()
-                            .position(currentPosition)
-                            .title(getLocationName(currentPosition)))
+                    val address = getLocationName(currentPosition)
+
+                    if(address == "-1"){
+                        Toast.makeText(requireContext(), "Unable to set marker", Toast.LENGTH_SHORT)
+                            .show()
+                    }else{
+                        _marker = map.addMarker(
+                            MarkerOptions()
+                                .position(currentPosition)
+                                .title(getLocationName(currentPosition)))
+                    }
                 }
             }
         }
@@ -137,28 +146,40 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap?) {
         googleMap?.let {
             map = it
-
             map.setOnMapLongClickListener { clickPosition ->
-                _marker.remove()
-                _marker = map.addMarker(MarkerOptions()
-                    .position(clickPosition)
-                    .title(getLocationName(clickPosition)))
+                val address = getLocationName(clickPosition)
+
+                if(address == "-1"){
+                    Toast.makeText(requireContext(), "Unable to set marker", Toast.LENGTH_SHORT)
+                        .show()
+                }else{
+                    _marker.remove()
+                    _marker = map.addMarker(MarkerOptions()
+                        .position(clickPosition)
+                        .title(address))
+                }
+
             }
             enableMyLocation()
         }
     }
 
     private fun getLocationName(position: LatLng) : String {
-        val geocoder = Geocoder(requireContext(), Locale.getDefault())
-        val addresses = geocoder.getFromLocation(position.latitude, position.longitude, 1)
 
-        if(addresses.isNotEmpty()){
-            addresses[0]?.let {
-                return it.featureName + " " + it.thoroughfare
+        try {
+            val geocoder = Geocoder(requireContext(), Locale.getDefault())
+            val addresses = geocoder.getFromLocation(position.latitude, position.longitude, 1)
+
+            if(addresses.isNotEmpty()){
+                addresses[0]?.let {
+                    return it.featureName + " " + it.thoroughfare
+                }
             }
+        }catch(exception: Exception){
+            Log.e("SelectLocationFragment", exception.message.toString())
         }
 
-        return "Location"
+        return "-1"
     }
 
     companion object {
