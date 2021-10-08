@@ -80,12 +80,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         currentPosition,
                         ZOOM_LEVEL
                     ))
-                    
+
                     _marker = map.addMarker(
                         MarkerOptions()
                             .position(currentPosition)
-                            .title("Current Location"))
-
+                            .title(getString(R.string.current_location_title)))
                 }
             }
         }
@@ -138,13 +137,23 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
-        googleMap?.let {
+        googleMap?.let { it ->
             map = it
-            map.setOnMapLongClickListener { clickPosition ->
+            map.setOnPoiClickListener { poi ->
                 _marker.remove()
                 _marker = map.addMarker(MarkerOptions()
-                    .position(clickPosition)
-                    .title("Current Location"))
+                    .position(poi.latLng)
+                    .title(poi.name))
+
+                _marker.showInfoWindow()
+            }
+
+            map.setOnMapLongClickListener { location ->
+
+                _marker.remove()
+                _marker = map.addMarker(MarkerOptions()
+                    .position(location)
+                    .title(getString(R.string.custom_location_title)))
             }
             enableMyLocation()
         }
