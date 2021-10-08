@@ -80,18 +80,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         currentPosition,
                         ZOOM_LEVEL
                     ))
+                    
+                    _marker = map.addMarker(
+                        MarkerOptions()
+                            .position(currentPosition)
+                            .title("Current Location"))
 
-                    val address = getLocationName(currentPosition)
-
-                    if(address == "-1"){
-                        Toast.makeText(requireContext(), "Unable to set marker", Toast.LENGTH_SHORT)
-                            .show()
-                    }else{
-                        _marker = map.addMarker(
-                            MarkerOptions()
-                                .position(currentPosition)
-                                .title(getLocationName(currentPosition)))
-                    }
                 }
             }
         }
@@ -147,39 +141,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         googleMap?.let {
             map = it
             map.setOnMapLongClickListener { clickPosition ->
-                val address = getLocationName(clickPosition)
-
-                if(address == "-1"){
-                    Toast.makeText(requireContext(), "Unable to set marker", Toast.LENGTH_SHORT)
-                        .show()
-                }else{
-                    _marker.remove()
-                    _marker = map.addMarker(MarkerOptions()
-                        .position(clickPosition)
-                        .title(address))
-                }
-
+                _marker.remove()
+                _marker = map.addMarker(MarkerOptions()
+                    .position(clickPosition)
+                    .title("Current Location"))
             }
             enableMyLocation()
         }
-    }
-
-    private fun getLocationName(position: LatLng) : String {
-
-        try {
-            val geocoder = Geocoder(requireContext(), Locale.getDefault())
-            val addresses = geocoder.getFromLocation(position.latitude, position.longitude, 1)
-
-            if(addresses.isNotEmpty()){
-                addresses[0]?.let {
-                    return it.featureName + " " + it.thoroughfare
-                }
-            }
-        }catch(exception: Exception){
-            Log.e("SelectLocationFragment", exception.message.toString())
-        }
-
-        return "-1"
     }
 
     companion object {

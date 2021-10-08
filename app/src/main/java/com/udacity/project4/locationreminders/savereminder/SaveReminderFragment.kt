@@ -72,8 +72,16 @@ class SaveReminderFragment : BaseFragment() {
             val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
+            val reminder = ReminderDataItem(
+                title,
+                description,
+                location,
+                latitude,
+                longitude
+            )
+
             val geofence = Geofence.Builder()
-                .setRequestId(location)
+                .setRequestId(reminder.id)
                 .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
                 .setExpirationDuration(TimeUnit.DAYS.toMillis(1))
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
@@ -100,13 +108,7 @@ class SaveReminderFragment : BaseFragment() {
                         Toast.makeText(requireContext(), "Geofence created", Toast.LENGTH_SHORT)
                             .show()
 
-                        _viewModel.validateAndSaveReminder(ReminderDataItem(
-                            title,
-                            description,
-                            location,
-                            latitude,
-                            longitude
-                        ))
+                        _viewModel.validateAndSaveReminder(reminder)
                     }
 
                     addOnFailureListener {
