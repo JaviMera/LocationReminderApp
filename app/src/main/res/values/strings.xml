@@ -42,4 +42,7 @@
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
     <string name="custom_location_title">Custom Location</string>
     <string name="current_location_title">Current Location</string>
+    <string name="description_reminder_title">Title:</string>
+    <string name="description_reminder_description">Description:</string>
+    <string name="description_reminder_location">Location:</string>
 </resources>
