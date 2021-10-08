@@ -80,42 +80,44 @@ class SaveReminderFragment : BaseFragment() {
                 longitude
             )
 
-            val geofence = Geofence.Builder()
-                .setRequestId(reminder.id)
-                .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
-                .setExpirationDuration(TimeUnit.DAYS.toMillis(1))
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-                .build()
+            if(_viewModel.validateEnteredData(reminder)){
+                val geofence = Geofence.Builder()
+                    .setRequestId(reminder.id)
+                    .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
+                    .setExpirationDuration(TimeUnit.DAYS.toMillis(1))
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                    .build()
 
-            val geofencingRequest = GeofencingRequest.Builder()
-                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                .addGeofence(geofence)
-                .build()
+                val geofencingRequest = GeofencingRequest.Builder()
+                    .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                    .addGeofence(geofence)
+                    .build()
 
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                Toast.makeText(requireContext(), "User permissions are not granted.", Toast.LENGTH_SHORT)
-                    .show()
+                if (ActivityCompat.checkSelfPermission(
+                        requireContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    Toast.makeText(requireContext(), "User permissions are not granted.", Toast.LENGTH_SHORT)
+                        .show()
 
-                return@setOnClickListener
-            }else{
+                    return@setOnClickListener
+                }else{
 
-                _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
-                    addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Geofence created", Toast.LENGTH_SHORT)
-                            .show()
+                    _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
+                        addOnSuccessListener {
+                            Toast.makeText(requireContext(), "Geofence created", Toast.LENGTH_SHORT)
+                                .show()
 
-                        _viewModel.validateAndSaveReminder(reminder)
-                    }
+                            _viewModel.validateAndSaveReminder(reminder)
+                        }
 
-                    addOnFailureListener {
-                        Toast.makeText(requireContext(), "Unable to to create Geofence", Toast.LENGTH_SHORT)
-                            .show()
+                        addOnFailureListener {
+                            Toast.makeText(requireContext(), "Unable to to create Geofence", Toast.LENGTH_SHORT)
+                                .show()
 
-                        Log.w("SaveReminderFragment", it.message.toString())
+                            Log.w("SaveReminderFragment", it.message.toString())
+                        }
                     }
                 }
             }
@@ -125,6 +127,15 @@ class SaveReminderFragment : BaseFragment() {
             if(it != null){
                 binding.selectedLocation.text = it
             }
+        })
+
+        _viewModel.showSnackBarInt.observe(viewLifecycleOwner, Observer {
+            Snackbar.make(
+                binding.fragmentSaveReminder,
+                getString(it!!),
+                Snackbar.LENGTH_LONG
+            )
+                .show()
         })
     }
 
