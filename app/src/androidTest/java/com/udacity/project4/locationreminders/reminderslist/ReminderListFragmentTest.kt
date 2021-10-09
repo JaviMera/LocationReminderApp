@@ -35,10 +35,10 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.inject
 
-@RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
 //UI Testing
 @MediumTest
+@RunWith(AndroidJUnit4::class)
 class ReminderListFragmentTest : KoinTest {
 
     private val _dataSource:ReminderDataSource by inject()
@@ -47,10 +47,10 @@ class ReminderListFragmentTest : KoinTest {
     @get:Rule
     var instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    @Rule
+    @get:Rule
     val activityRule = ActivityTestRule(RemindersActivity::class.java)
 
-    @Rule
+    @get:Rule
     var runtimePermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -90,17 +90,14 @@ class ReminderListFragmentTest : KoinTest {
     @Test
     fun saveReminder_displayedOnUi() = runBlockingTest {
 
-//        // Given
-//        val reminder = ReminderDTO("title", "description", "location", 10.0, 10.0)
-//        _dataSource.saveReminder(reminder)
-//
-//        // When
-//        launchFragmentInContainer<ReminderListFragment>()
-//
-//        // Then
-//        onView(withText("title")).check(matches(isDisplayed()))
+        // Given
+        val reminder = ReminderDTO("title", "description", "location", 10.0, 10.0)
+        _dataSource.saveReminder(reminder)
+
+        // When
+        launchFragmentInContainer<ReminderListFragment>()
+
+        // Then
+        onView(withText("title")).check(matches(isDisplayed()))
     }
-//    TODO: test the navigation of the fragments.
-//    TODO: test the displayed data on the UI.
-//    TODO: add testing for the error messages.
 }
