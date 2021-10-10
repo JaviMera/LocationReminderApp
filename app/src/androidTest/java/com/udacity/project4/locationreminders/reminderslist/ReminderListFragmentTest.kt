@@ -9,6 +9,7 @@ import androidx.navigation.Navigation
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,6 +27,8 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.RemindersDao
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
+import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment
+import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 
@@ -38,6 +41,7 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.inject
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 //UI Testing
@@ -70,7 +74,7 @@ class ReminderListFragmentTest : KoinTest {
                     viewModel {
                         RemindersListViewModel(
                             getApplicationContext(),
-                            get() as FakeDataSource
+                            get()
                         )
                     }
                     single {
@@ -107,5 +111,24 @@ class ReminderListFragmentTest : KoinTest {
 
         // Then
         onView(withText("title")).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun remindersListFragment_clickOnFab_displaySaveReminderFragment() = runBlockingTest {
+
+        // Given
+        val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
+        val navController = mock(NavController::class.java)
+        scenario.onFragment {
+            Navigation.setViewNavController(it.view!!, navController)
+        }
+
+        // When
+        onView(withId(R.id.addReminderFAB)).perform(click())
+
+        // Then
+        verify(navController).navigate(
+            ReminderListFragmentDirections.toSaveReminder()
+        )
     }
 }
