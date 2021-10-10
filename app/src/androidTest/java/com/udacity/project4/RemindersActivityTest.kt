@@ -1,16 +1,31 @@
 package com.udacity.project4
 
+import android.Manifest
 import android.app.Application
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.rule.ActivityTestRule
+import androidx.test.rule.GrantPermissionRule
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
+import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.core.Is.`is`
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -28,6 +43,18 @@ class RemindersActivityTest :
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
+
+    @get:Rule
+    var instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    val activityRule = ActivityTestRule(RemindersActivity::class.java)
+
+    @get:Rule
+    var runtimePermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION)
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -66,4 +93,40 @@ class RemindersActivityTest :
         }
     }
 
+    @Test
+    fun displayMap() = runBlocking {
+
+        // Given
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+
+        // When
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.selectLocation)).perform(click())
+
+        // Then
+        onView(withId(R.id.map)).check(matches(isDisplayed()))
+        activityScenario.close()
+    }
+
+    @Test
+    fun createNewReminder() = runBlocking {
+
+        val title = "go for a walk"
+        val description = "description of the title"
+
+        // Given
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+
+        // When
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(replaceText(title))
+        onView(withId(R.id.reminderDescription)).perform(replaceText(description))
+        onView(withId(R.id.selectLocation)).perform(click())
+        onView(withId(R.id.save_reminder_activity_button_save)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        // Then
+        assertThat((repository.getReminders() as Result.Success).data.size, `is`(1))
+        activityScenario.close()
+    }
 }

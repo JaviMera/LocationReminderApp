@@ -8,7 +8,9 @@ import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -27,6 +29,7 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.RemindersDao
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
+import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 
@@ -71,6 +74,12 @@ class ReminderListFragmentTest : KoinTest {
                 module{
                     viewModel {
                         RemindersListViewModel(
+                            getApplicationContext(),
+                            get()
+                        )
+                    }
+                    single{
+                        SaveReminderViewModel(
                             getApplicationContext(),
                             get()
                         )
@@ -139,9 +148,8 @@ class ReminderListFragmentTest : KoinTest {
         scenario.onFragment {
             Navigation.setViewNavController(it.view!!, navController)
         }
-        onView(withId(R.id.addReminderFAB)).perform(click())
 
-        // When
+        onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
 
         // Then
