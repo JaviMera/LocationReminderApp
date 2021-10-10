@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.Geofence.NEVER_EXPIRE
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
@@ -84,7 +85,7 @@ class SaveReminderFragment : BaseFragment() {
                 val geofence = Geofence.Builder()
                     .setRequestId(reminder.id)
                     .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
-                    .setExpirationDuration(TimeUnit.DAYS.toMillis(1))
+                    .setExpirationDuration(NEVER_EXPIRE)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                     .build()
 
