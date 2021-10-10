@@ -131,4 +131,21 @@ class ReminderListFragmentTest : KoinTest {
             ReminderListFragmentDirections.toSaveReminder()
         )
     }
+
+    @Test
+    fun reminderListFragment_clickAddReminder_saveEmptyReminderShowsErrors() = runBlockingTest{
+
+        // Given
+        val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
+        val navController = mock(NavController::class.java)
+        scenario.onFragment {
+            Navigation.setViewNavController(it.view!!, navController)
+        }
+
+        // When
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        // Then
+        onView(withText(R.string.err_enter_title)).check(matches(isDisplayed()))
+    }
 }
