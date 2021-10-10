@@ -27,8 +27,6 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.RemindersDao
 import com.udacity.project4.locationreminders.data.local.RemindersDatabase
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
-import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment
-import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 
@@ -136,11 +134,12 @@ class ReminderListFragmentTest : KoinTest {
     fun reminderListFragment_clickAddReminder_saveEmptyReminderShowsErrors() = runBlockingTest{
 
         // Given
-        val scenario = launchFragmentInContainer<SaveReminderFragment>(Bundle(), R.style.AppTheme)
+        val scenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
         val navController = mock(NavController::class.java)
         scenario.onFragment {
             Navigation.setViewNavController(it.view!!, navController)
         }
+        onView(withId(R.id.addReminderFAB)).perform(click())
 
         // When
         onView(withId(R.id.saveReminder)).perform(click())
