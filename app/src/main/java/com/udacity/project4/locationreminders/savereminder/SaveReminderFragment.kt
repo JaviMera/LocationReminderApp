@@ -55,62 +55,27 @@ class SaveReminderFragment : BaseFragment() {
         return binding.root
     }
 
+    private fun selectLocation(){
+        if(!locationPermissionsApproved()){
+            _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
+        }else{
+            _viewModel.navigationCommand.value =
+                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
         binding.selectLocation.setOnClickListener {
-
-            val locationRequest = LocationRequest.create().apply {
-                priority = LocationRequest.PRIORITY_LOW_POWER
-            }
-
-            val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-            val settingsClient = LocationServices.getSettingsClient(requireActivity())
-            val locationSettingsResponseTask = settingsClient.checkLocationSettings(builder.build())
-            locationSettingsResponseTask.addOnFailureListener{exception ->
-                if(exception is ResolvableApiException){
-                    try{
-                        exception.startResolutionForResult(requireActivity(), REQUEST_TURN_DEVICE_LOCATION_ON)
-                    }catch(exception: IntentSender.SendIntentException){
-                        Log.d("SaveReminderFragment", "Error getting location settings resolution: " + exception.message)
-                    }
-                }
-            }
-
-            locationSettingsResponseTask.addOnCompleteListener {
-                if(it.isSuccessful){
-                    if(!locationPermissionsApproved()){
-                        _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
-                    }else{
-                        _viewModel.navigationCommand.value =
-                            NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
-                    }
-                }
-            }
+           checkDeviceLocationSettingsAndAddGeofence(::selectLocation)
         }
 
         binding.saveReminder.setOnClickListener {
-            val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription.value
-            val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude.value
-            val longitude = _viewModel.longitude.value
-
-            val reminder = ReminderDataItem(
-                title,
-                description,
-                location,
-                latitude,
-                longitude
-            )
-
-            if(_viewModel.validateEnteredData(reminder)){
-
-                if(!geofencingPermissionsApproved()){
-                    requestGeofencingPermissions()
-                }else {
-                    checkDeviceLocationSettingsAndAddGeofence()
-                }
+            if(!geofencingPermissionsApproved()){
+                requestGeofencingPermissions()
+            }else {
+                checkDeviceLocationSettingsAndAddGeofence(::addGeofence)
             }
         }
 
@@ -160,37 +125,39 @@ class SaveReminderFragment : BaseFragment() {
             longitude
         )
 
-        val geofence = Geofence.Builder()
-            .setRequestId(reminder.id)
-            .setCircularRegion(reminder.latitude!!, reminder.longitude!!, GEOFENCE_RADIUS_IN_METERS)
-            .setExpirationDuration(NEVER_EXPIRE)
-            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-            .build()
+        if(_viewModel.validateEnteredData(reminder)){
+            val geofence = Geofence.Builder()
+                .setRequestId(reminder.id)
+                .setCircularRegion(reminder.latitude!!, reminder.longitude!!, GEOFENCE_RADIUS_IN_METERS)
+                .setExpirationDuration(NEVER_EXPIRE)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                .build()
 
-        val geofencingRequest = GeofencingRequest.Builder()
-            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-            .addGeofence(geofence)
-            .build()
+            val geofencingRequest = GeofencingRequest.Builder()
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                .addGeofence(geofence)
+                .build()
 
-        _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
-            addOnSuccessListener {
-                _viewModel.validateAndSaveReminder(reminder)
-            }
+            _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
+                addOnSuccessListener {
+                    _viewModel.validateAndSaveReminder(reminder)
+                }
 
-            addOnFailureListener {
-                Toast.makeText(
-                    requireContext(),
-                    "Unable to to create Geofence",
-                    Toast.LENGTH_SHORT
-                )
-                    .show()
+                addOnFailureListener {
+                    Toast.makeText(
+                        requireContext(),
+                        "Unable to to create Geofence",
+                        Toast.LENGTH_SHORT
+                    )
+                        .show()
 
-                Log.w("SaveReminderFragment", it.message.toString())
+                    Log.w("SaveReminderFragment", it.message.toString())
+                }
             }
         }
     }
 
-    private fun checkDeviceLocationSettingsAndAddGeofence(resolve:Boolean = true) {
+    private fun checkDeviceLocationSettingsAndAddGeofence(function: () -> Unit, resolve:Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -211,14 +178,14 @@ class SaveReminderFragment : BaseFragment() {
                     R.string.location_required_error,
                     Snackbar.LENGTH_INDEFINITE
                 ).setAction("OK"){
-                    checkDeviceLocationSettingsAndAddGeofence()
+                    checkDeviceLocationSettingsAndAddGeofence(function)
                 }.show()
             }
         }
 
         locationSettingsResponseTask.addOnCompleteListener {
             if(it.isSuccessful){
-                addGeofence()
+                function()
             }
         }
     }
