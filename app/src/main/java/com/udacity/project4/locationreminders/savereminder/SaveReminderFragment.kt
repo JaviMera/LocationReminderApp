@@ -107,9 +107,6 @@ class SaveReminderFragment : BaseFragment() {
 
                     _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
                         addOnSuccessListener {
-                            Toast.makeText(requireContext(), "Geofence created", Toast.LENGTH_SHORT)
-                                .show()
-
                             _viewModel.validateAndSaveReminder(reminder)
                         }
 
