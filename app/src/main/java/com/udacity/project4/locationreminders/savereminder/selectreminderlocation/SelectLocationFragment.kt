@@ -17,6 +17,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
@@ -155,6 +156,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     .position(location)
                     .title(getString(R.string.custom_location_title)))
             }
+
+            it.setMapStyle(MapStyleOptions.loadRawResourceStyle(
+                context,
+                R.raw.map_style
+            ))
             enableMyLocation()
         }
     }
