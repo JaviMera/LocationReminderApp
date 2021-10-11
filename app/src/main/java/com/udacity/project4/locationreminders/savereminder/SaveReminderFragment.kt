@@ -5,7 +5,9 @@ import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -20,12 +22,14 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.SelectLocationFragment
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
@@ -135,6 +139,21 @@ class SaveReminderFragment : BaseFragment() {
             )
                 .show()
         })
+
+        _viewModel.showSnackBar.observe(viewLifecycleOwner, Observer{
+            val snackbar = Snackbar.make(
+                binding.fragmentSaveReminder,
+                it,
+                Snackbar.LENGTH_INDEFINITE
+            )
+
+            snackbar.setAction("enable", View.OnClickListener {
+                requestLocationPermissions()
+                requestGeofencingPermissions()
+            })
+
+            snackbar.show()
+        })
     }
 
     override fun onRequestPermissionsResult(
@@ -156,10 +175,11 @@ class SaveReminderFragment : BaseFragment() {
     override fun onStart() {
         super.onStart()
 
-        if(geofencingPermissionsApproved()){
+        if(geofencingPermissionsApproved() && locationPermissionsApproved()){
             // TODO: Add check for device's location
         }else{
             requestGeofencingPermissions()
+            requestLocationPermissions()
         }
     }
 
@@ -209,11 +229,42 @@ class SaveReminderFragment : BaseFragment() {
         )
     }
 
+    private fun requestLocationPermissions() {
+
+        if(locationPermissionsApproved())
+            return
+
+        requestPermissions(
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            REQUEST_LOCATION_PERMISSION_CODE
+        )
+    }
+
+
+    private fun locationPermissionsApproved() : Boolean {
+
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+            _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
+            return false
+        }else{
+            return true
+        }
+    }
+
     companion object{
         private const val GEOFENCE_RADIUS_IN_METERS = 100.0f
         private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
         private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
         private const val LOCATION_PERMISSION_INDEX = 0
         private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+        private const val REQUEST_LOCATION_PERMISSION_CODE = 1002
     }
 }
