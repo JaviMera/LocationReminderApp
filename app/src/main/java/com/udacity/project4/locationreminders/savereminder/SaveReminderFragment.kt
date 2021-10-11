@@ -90,28 +90,22 @@ class SaveReminderFragment : BaseFragment() {
             )
 
             if(_viewModel.validateEnteredData(reminder)){
-                val geofence = Geofence.Builder()
-                    .setRequestId(reminder.id)
-                    .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
-                    .setExpirationDuration(NEVER_EXPIRE)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-                    .build()
 
-                val geofencingRequest = GeofencingRequest.Builder()
-                    .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                    .addGeofence(geofence)
-                    .build()
+                if(!geofencingPermissionsApproved()){
+                    requestGeofencingPermissions()
+                }else {
 
-                if (ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    Toast.makeText(requireContext(), "User permissions are not granted.", Toast.LENGTH_SHORT)
-                        .show()
+                    val geofence = Geofence.Builder()
+                        .setRequestId(reminder.id)
+                        .setCircularRegion(latitude!!, longitude!!, GEOFENCE_RADIUS_IN_METERS)
+                        .setExpirationDuration(NEVER_EXPIRE)
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                        .build()
 
-                    return@setOnClickListener
-                }else{
+                    val geofencingRequest = GeofencingRequest.Builder()
+                        .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                        .addGeofence(geofence)
+                        .build()
 
                     _geofenceClient.addGeofences(geofencingRequest, _geofencePendingIntent)?.run {
                         addOnSuccessListener {
@@ -119,7 +113,11 @@ class SaveReminderFragment : BaseFragment() {
                         }
 
                         addOnFailureListener {
-                            Toast.makeText(requireContext(), "Unable to to create Geofence", Toast.LENGTH_SHORT)
+                            Toast.makeText(
+                                requireContext(),
+                                "Unable to to create Geofence",
+                                Toast.LENGTH_SHORT
+                            )
                                 .show()
 
                             Log.w("SaveReminderFragment", it.message.toString())
@@ -205,8 +203,6 @@ class SaveReminderFragment : BaseFragment() {
 
     @TargetApi(29)
     private fun requestGeofencingPermissions(){
-        if(geofencingPermissionsApproved())
-            return
 
         var permissionArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -227,7 +223,8 @@ class SaveReminderFragment : BaseFragment() {
 
     private fun requestLocationPermissions() {
 
-        requestPermissions(
+        ActivityCompat.requestPermissions(
+            requireActivity(),
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
             REQUEST_LOCATION_PERMISSION_CODE
         )
