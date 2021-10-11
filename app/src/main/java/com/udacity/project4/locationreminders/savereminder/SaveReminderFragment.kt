@@ -55,27 +55,19 @@ class SaveReminderFragment : BaseFragment() {
         return binding.root
     }
 
-    private fun selectLocation(){
-        if(!locationPermissionsApproved()){
-            _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
-        }else{
-            _viewModel.navigationCommand.value =
-                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
         binding.selectLocation.setOnClickListener {
-           checkDeviceLocationSettingsAndAddGeofence(::selectLocation)
+            _viewModel.navigationCommand.value =
+                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
 
         binding.saveReminder.setOnClickListener {
             if(!geofencingPermissionsApproved()){
                 requestGeofencingPermissions()
             }else {
-                checkDeviceLocationSettingsAndAddGeofence(::addGeofence)
+                checkDeviceLocationSettings(::addGeofence)
             }
         }
 
@@ -157,7 +149,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    private fun checkDeviceLocationSettingsAndAddGeofence(function: () -> Unit, resolve:Boolean = true) {
+    private fun checkDeviceLocationSettings(function: () -> Unit, resolve:Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -178,7 +170,7 @@ class SaveReminderFragment : BaseFragment() {
                     R.string.location_required_error,
                     Snackbar.LENGTH_INDEFINITE
                 ).setAction("OK"){
-                    checkDeviceLocationSettingsAndAddGeofence(function)
+                    checkDeviceLocationSettings(function)
                 }.show()
             }
         }

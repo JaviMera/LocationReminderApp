@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.zzt
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -20,12 +21,14 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -36,7 +39,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
     private val _locationClient: FusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(requireContext()) }
-    private lateinit var _marker: Marker
+    private var _marker: Marker? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -53,8 +56,21 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         binding.saveReminderActivityButtonSave.setOnClickListener {
 
-            onLocationSelected()
+            if(_marker == null){
+                _viewModel.showSnackBar.value = "Please select a location on the map"
+            }else{
+                onLocationSelected()
+            }
         }
+
+        _viewModel.showSnackBar.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            Snackbar.make(
+                    binding.selectLocationFragmentConstraintLayout,
+                it!!,
+                Snackbar.LENGTH_LONG
+                )
+                .show()
+        })
         return binding.root
     }
 
@@ -106,9 +122,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        _viewModel.reminderSelectedLocationStr.value = _marker.title
-        _viewModel.longitude.value = _marker.position.longitude
-        _viewModel.latitude.value = _marker.position.latitude
+        _viewModel.reminderSelectedLocationStr.value = _marker?.title
+        _viewModel.longitude.value = _marker?.position?.longitude
+        _viewModel.latitude.value = _marker?.position?.latitude
         _viewModel.navigationCommand.value =
             NavigationCommand.To(SelectLocationFragmentDirections.actionSelectLocationFragmentToSaveReminderFragment())
     }
@@ -141,17 +157,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         googleMap?.let { it ->
             map = it
             map.setOnPoiClickListener { poi ->
-                _marker.remove()
+
+                _marker?.remove()
                 _marker = map.addMarker(MarkerOptions()
                     .position(poi.latLng)
                     .title(poi.name))
 
-                _marker.showInfoWindow()
+                _marker?.showInfoWindow()
             }
 
             map.setOnMapLongClickListener { location ->
 
-                _marker.remove()
+                _marker?.remove()
+
                 _marker = map.addMarker(MarkerOptions()
                     .position(location)
                     .title(getString(R.string.custom_location_title)))

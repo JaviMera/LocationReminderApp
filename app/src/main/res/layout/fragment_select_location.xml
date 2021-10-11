@@ -11,6 +11,7 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/select_location_fragment_constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <!--TODO: Add the map fragment for the user to select the location-->
