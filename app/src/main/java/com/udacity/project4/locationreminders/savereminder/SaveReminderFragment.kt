@@ -65,9 +65,13 @@ class SaveReminderFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
         binding.selectLocation.setOnClickListener {
-            //            Navigate to another fragment to get the user location
-            _viewModel.navigationCommand.value =
-                NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+
+            if(!locationPermissionsApproved()){
+                _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
+            }else{
+                _viewModel.navigationCommand.value =
+                    NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+            }
         }
 
         binding.saveReminder.setOnClickListener {
@@ -149,7 +153,6 @@ class SaveReminderFragment : BaseFragment() {
 
             snackbar.setAction("enable", View.OnClickListener {
                 requestLocationPermissions()
-                requestGeofencingPermissions()
             })
 
             snackbar.show()
@@ -174,13 +177,6 @@ class SaveReminderFragment : BaseFragment() {
 
     override fun onStart() {
         super.onStart()
-
-        if(geofencingPermissionsApproved() && locationPermissionsApproved()){
-            // TODO: Add check for device's location
-        }else{
-            requestGeofencingPermissions()
-            requestLocationPermissions()
-        }
     }
 
     override fun onDestroy() {
@@ -231,9 +227,6 @@ class SaveReminderFragment : BaseFragment() {
 
     private fun requestLocationPermissions() {
 
-        if(locationPermissionsApproved())
-            return
-
         requestPermissions(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
             REQUEST_LOCATION_PERMISSION_CODE
@@ -243,20 +236,13 @@ class SaveReminderFragment : BaseFragment() {
 
     private fun locationPermissionsApproved() : Boolean {
 
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-
-            _viewModel.showSnackBar.value = getString(R.string.permission_denied_explanation)
-            return false
-        }else{
-            return true
-        }
+        return !(ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED)
     }
 
     companion object{
