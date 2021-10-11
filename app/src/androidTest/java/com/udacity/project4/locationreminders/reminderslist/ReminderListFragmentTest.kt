@@ -51,7 +51,6 @@ import org.mockito.Mockito.verify
 class ReminderListFragmentTest : KoinTest {
 
     private val _dataSource:ReminderDataSource by inject()
-    private lateinit var _database: RemindersDatabase
 
     @get:Rule
     var instantTaskExecutorRule = InstantTaskExecutorRule()
