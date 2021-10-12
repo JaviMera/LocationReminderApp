@@ -12,9 +12,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -33,6 +34,7 @@ class SaveReminderFragment : BaseFragment() {
     //Get the view model this time as a single to be shared with the another fragment
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSaveReminderBinding
+    private lateinit var _requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private val _geofenceClient: GeofencingClient by lazy {LocationServices.getGeofencingClient(requireContext())}
     private val _geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(requireActivity(), GeofenceBroadcastReceiver::class.java)
@@ -100,15 +102,27 @@ class SaveReminderFragment : BaseFragment() {
 
             snackbar.show()
         })
+
+        _requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ permissions ->
+
+            if(permissions.all { permission -> permission.value!! }){
+                binding.saveReminder.callOnClick()
+            }else{
+                Toast.makeText(requireContext(), "You need to grant location permission in order to add a new reminder", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         try {
-            if(requestCode in 0..65535){
+            if(requestCode in 0..65535 && resultCode == -1){
                 binding.saveReminder.callOnClick()
+            }else if(resultCode == 0){
+                Log.e("SaveReminderFragment", "User clicked cancel on location setting.")
             }else{
+
                 Log.e("SaveReminderFragment", "Unable to receive location setting.")
             }
         }catch(exception: Exception){
@@ -197,28 +211,6 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if(grantResults.isEmpty()
-            || grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED
-            || (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-                    && grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)){
-
-            Toast.makeText(requireContext(), "You need to grant location permission in order to add a new reminder", Toast.LENGTH_SHORT).show()
-        }else{
-            binding.saveReminder.callOnClick()
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.
@@ -248,26 +240,19 @@ class SaveReminderFragment : BaseFragment() {
 
         var permissionArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
-        val resultCode = when{
-            _runningQOrLater -> {
-                permissionArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-            }
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        if(_runningQOrLater){
+            permissionArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
         }
 
-        requestPermissions(
-            permissionArray,
-            resultCode
+        _requestPermissionLauncher.launch(
+            permissionArray
         )
     }
 
     private fun requestLocationPermissions() {
 
-        ActivityCompat.requestPermissions(
-            requireActivity(),
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            REQUEST_LOCATION_PERMISSION_CODE
+        _requestPermissionLauncher.launch(
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         )
     }
 
