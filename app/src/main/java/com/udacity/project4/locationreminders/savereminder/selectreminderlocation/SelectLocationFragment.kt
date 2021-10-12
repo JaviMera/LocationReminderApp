@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -38,6 +40,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var map: GoogleMap
+    private lateinit var _requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private val _locationClient: FusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(requireContext()) }
     private var _marker: Marker? = null
 
@@ -71,6 +74,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 )
                 .show()
         })
+
+        _requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ permissions ->
+
+            if(permissions.all { permission -> permission.value!! }){
+                enableMyLocation()
+            }else{
+                _viewModel.showSnackBar.value = getString(R.string.determine_location_error)
+            }
+        }
         return binding.root
     }
 
@@ -83,9 +95,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                REQUEST_PERMISSION_CODE
+            _requestPermissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
         }else{
             map.isMyLocationEnabled = true
@@ -104,23 +115,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                             .title(getString(R.string.current_location_title)))
                 }
             }
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if(requestCode == REQUEST_PERMISSION_CODE){
-            if(grantResults.isNotEmpty() && (grantResults.all { it == PackageManager.PERMISSION_GRANTED})) {
-                enableMyLocation()
-            }else{
-                _viewModel.showSnackBar.value = getString(R.string.determine_location_error)
-            }
-
         }
     }
 
