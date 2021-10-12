@@ -13,7 +13,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -35,6 +37,7 @@ class SaveReminderFragment : BaseFragment() {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSaveReminderBinding
     private lateinit var _requestPermissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var _requestLocationSetting: ActivityResultLauncher<IntentSenderRequest>
     private val _geofenceClient: GeofencingClient by lazy {LocationServices.getGeofencingClient(requireContext())}
     private val _geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(requireActivity(), GeofenceBroadcastReceiver::class.java)
@@ -111,22 +114,24 @@ class SaveReminderFragment : BaseFragment() {
                 Toast.makeText(requireContext(), "You need to grant location permission in order to add a new reminder", Toast.LENGTH_SHORT).show()
             }
         }
-    }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+        _requestLocationSetting = registerForActivityResult(StartIntentSenderForResult()){
+            try {
+                when (it.resultCode) {
+                    -1 -> {
+                        binding.saveReminder.callOnClick()
+                    }
+                    0 -> {
+                        Log.e("SaveReminderFragment", "User clicked cancel on location setting.")
+                    }
+                    else -> {
 
-        try {
-            if(requestCode in 0..65535 && resultCode == -1){
-                binding.saveReminder.callOnClick()
-            }else if(resultCode == 0){
-                Log.e("SaveReminderFragment", "User clicked cancel on location setting.")
-            }else{
-
-                Log.e("SaveReminderFragment", "Unable to receive location setting.")
+                        Log.e("SaveReminderFragment", "Unable to receive location setting.")
+                    }
+                }
+            }catch(exception: Exception){
+                Log.e("SaveReminderFragment", exception.localizedMessage!!)
             }
-        }catch(exception: Exception){
-            Log.e("SaveReminderFragment", exception.localizedMessage!!)
         }
     }
 
@@ -189,7 +194,7 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnFailureListener{exception ->
             if(exception is ResolvableApiException && resolve){
                 try{
-                    startIntentSenderForResult(exception.resolution.intentSender, REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0,0, null)
+                    _requestLocationSetting.launch(IntentSenderRequest.Builder(exception.resolution).build())
                 }catch(exception: IntentSender.SendIntentException){
                     Log.d("SaveReminderFragment", "Error getting location settings resolution: " + exception.message)
                 }
