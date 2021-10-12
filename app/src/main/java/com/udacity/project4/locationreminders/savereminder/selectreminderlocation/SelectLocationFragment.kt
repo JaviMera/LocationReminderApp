@@ -117,7 +117,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if(requestCode == REQUEST_PERMISSION_CODE){
             if(grantResults.isNotEmpty() && (grantResults.all { it == PackageManager.PERMISSION_GRANTED})) {
                 enableMyLocation()
+            }else{
+                _viewModel.showSnackBar.value = getString(R.string.determine_location_error)
             }
+
         }
     }
 
