@@ -122,7 +122,7 @@ class SaveReminderFragment : BaseFragment() {
                         binding.saveReminder.callOnClick()
                     }
                     0 -> {
-                        Log.e("SaveReminderFragment", "User clicked cancel on location setting.")
+                        _viewModel.showSnackBar.value = getString(R.string.location_required_error)
                     }
                     else -> {
 
