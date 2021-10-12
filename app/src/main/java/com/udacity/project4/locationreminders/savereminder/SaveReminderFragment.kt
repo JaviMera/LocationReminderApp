@@ -210,6 +210,8 @@ class SaveReminderFragment : BaseFragment() {
                     && grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)){
 
             Toast.makeText(requireContext(), "You need to grant location permission in order to add a new reminder", Toast.LENGTH_SHORT).show()
+        }else{
+            binding.saveReminder.callOnClick()
         }
     }
 
@@ -254,8 +256,7 @@ class SaveReminderFragment : BaseFragment() {
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
 
-        ActivityCompat.requestPermissions(
-            requireActivity(),
+        requestPermissions(
             permissionArray,
             resultCode
         )
