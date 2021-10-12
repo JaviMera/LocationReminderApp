@@ -67,7 +67,7 @@ class SaveReminderFragment : BaseFragment() {
             if(!geofencingPermissionsApproved()){
                 requestGeofencingPermissions()
             }else {
-                checkDeviceLocationSettings(::addGeofence)
+                checkDeviceLocationSettings()
             }
         }
 
@@ -149,7 +149,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    private fun checkDeviceLocationSettings(function: () -> Unit, resolve:Boolean = true) {
+    private fun checkDeviceLocationSettings(resolve:Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -170,14 +170,14 @@ class SaveReminderFragment : BaseFragment() {
                     R.string.location_required_error,
                     Snackbar.LENGTH_INDEFINITE
                 ).setAction("OK"){
-                    checkDeviceLocationSettings(function)
+                    checkDeviceLocationSettings()
                 }.show()
             }
         }
 
         locationSettingsResponseTask.addOnCompleteListener {
             if(it.isSuccessful){
-                function()
+                addGeofence()
             }
         }
     }
