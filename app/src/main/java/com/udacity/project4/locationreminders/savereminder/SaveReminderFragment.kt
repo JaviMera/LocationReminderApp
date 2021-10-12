@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -101,6 +102,20 @@ class SaveReminderFragment : BaseFragment() {
         })
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        try {
+            if(requestCode in 0..65535){
+                binding.saveReminder.callOnClick()
+            }else{
+                Log.e("SaveReminderFragment", "Unable to receive location setting.")
+            }
+        }catch(exception: Exception){
+            Log.e("SaveReminderFragment", exception.localizedMessage!!)
+        }
+    }
+
     private fun addGeofence() {
 
         val title = _viewModel.reminderTitle.value
@@ -160,7 +175,7 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnFailureListener{exception ->
             if(exception is ResolvableApiException && resolve){
                 try{
-                    exception.startResolutionForResult(requireActivity(), REQUEST_TURN_DEVICE_LOCATION_ON)
+                    startIntentSenderForResult(exception.resolution.intentSender, REQUEST_TURN_DEVICE_LOCATION_ON, null, 0, 0,0, null)
                 }catch(exception: IntentSender.SendIntentException){
                     Log.d("SaveReminderFragment", "Error getting location settings resolution: " + exception.message)
                 }
@@ -253,18 +268,6 @@ class SaveReminderFragment : BaseFragment() {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
             REQUEST_LOCATION_PERMISSION_CODE
         )
-    }
-
-
-    private fun locationPermissionsApproved() : Boolean {
-
-        return !(ActivityCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED)
     }
 
     companion object{
